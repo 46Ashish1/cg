@@ -1,123 +1,195 @@
-#include <conio.h>
+#include <bits/stdc++.h>
 #include <graphics.h>
-#include <iostream.h>
-#include <stdio.h>
-#include <stdlib.h>
-typedef unsigned int outcode;
-enum
+using namespace std;
+int xmin, xmax, ymin, ymax;
+struct lines
 {
-    TOP = 0x1,
-    BOTTOM = 0x2,
-    RIGHT = 0x4,
-    LEFT = 0x8
+    int x1, y1, x2, y2;
 };
-outcode computeOutcode(double x, double y, double xmin,
-                       double xmax, double ymin, double ymax)
+int sign(int x)
 {
-    outcode code = 0;
-    if (y > ymax)
-        code |= TOP;
-    else if (y < ymin)
-        code |= BOTTOM;
-    if (x > xmax)
-        code |= RIGHT;
-    else if (x < xmin)
-        code |= LEFT;
-    return code;
+    if (x > 0)
+        return 1;
+    else
+        return 0;
 }
-void clipLine(double x0, double yo, double x1, double y1,
-              double xmin, double xmax, double ymin, double ymax)
+void clip(struct lines mylines)
 {
-    int accept = 0, done = 0;
-    outcode outcode0, outcode1, outcodeout;
-    outcode0 = computeOutcode(x0, yo, xmin, xmax, ymin, ymax);
-    outcode1 = computeOutcode(x1, y1, xmin, xmax, ymin, ymax);
-    do
+    int bits[4], bite[4], i, var;
+    setcolor(RED);
+    bits[0] = sign(xmin - mylines.x1);
+    bite[0] = sign(xmin - mylines.x2);
+    bits[1] = sign(mylines.x1 - xmax);
+    bite[1] = sign(mylines.x2 - xmax);
+    bits[2] = sign(ymin - mylines.y1);
+    bite[2] = sign(ymin - mylines.y2);
+    bits[3] = sign(mylines.y1 - ymax);
+    bite[3] = sign(mylines.y2 - ymax);
+    string initial = "", end = "", temp = "";
+    for (i = 0; i < 4; i++)
     {
-        if (!(outcode0 | outcode1))
+        if (bits[i] == 0)
+            initial += '0';
+        else
+            initial += '1';
+    }
+    for (i = 0; i < 4; i++)
+    {
+        if (bite[i] == 0)
+            end += '0';
+        else
+            end += '1';
+    }
+    float m = (mylines.y2 - mylines.y1) / (float)(mylines.x2 - mylines.x1);
+    float c = mylines.y1 - m * mylines.x1;
+    if (initial == end && end == "0000")
+    {
+        line(mylines.x1, mylines.y1, mylines.x2, mylines.y2);
+        return;
+    }
+    else
+    {
+        for (i = 0; i < 4; i++)
         {
-            accept = 1;
-            done = 1;
+
+            int val = (bits[i] & bite[i]);
+            if (val == 0)
+                temp += '0';
+            else
+                temp += '1';
         }
-        else if (outcode0 & outcode1)
+        if (temp != "0000")
+            return;
+        for (i = 0; i < 4; i++)
         {
-            done = 1;
+            if (bits[i] == bite[i])
+                continue;
+            if (i == 0 && bits[i] == 1)
+            {
+                var = round(m * xmin + c);
+                mylines.y1 = var;
+                mylines.x1 = xmin;
+            }
+            if (i == 0 && bite[i] == 1)
+            {
+                var = round(m * xmin + c);
+                mylines.y2 = var;
+                mylines.x2 = xmin;
+            }
+            if (i == 1 && bits[i] == 1)
+            {
+                var = round(m * xmax + c);
+                mylines.y1 = var;
+                mylines.x1 = xmax;
+            }
+            if (i == 1 && bite[i] == 1)
+            {
+                var = round(m * xmax + c);
+                mylines.y2 = var;
+                mylines.x2 = xmax;
+            }
+            if (i == 2 && bits[i] == 1)
+            {
+                var = round((float)(ymin - c) / m);
+                mylines.y1 = ymin;
+                mylines.x1 = var;
+            }
+            if (i == 2 && bite[i] == 1)
+            {
+                var = round((float)(ymin - c) / m);
+                mylines.y2 = ymin;
+                mylines.x2 = var;
+            }
+            if (i == 3 && bits[i] == 1)
+            {
+                var = round((float)(ymax - c) / m);
+                mylines.y1 = ymax;
+                mylines.x1 = var;
+            }
+            if (i == 3 && bite[i] == 1)
+            {
+                var = round((float)(ymax - c) / m);
+                mylines.y2 = ymax;
+                mylines.x2 = var;
+            }
+            bits[0] = sign(xmin - mylines.x1);
+            bite[0] = sign(xmin - mylines.x2);
+            bits[1] = sign(mylines.x1 - xmax);
+            bite[1] = sign(mylines.x2 - xmax);
+            bits[2] = sign(ymin - mylines.y1);
+            bite[2] = sign(ymin - mylines.y2);
+            bits[3] = sign(mylines.y1 - ymax);
+            bite[3] = sign(mylines.y2 - ymax);
+        }
+        initial = "", end = "";
+        for (i = 0; i < 4; i++)
+        {
+            if (bits[i] == 0)
+                initial += '0';
+            else
+                initial += '1';
+        }
+        for (i = 0; i < 4; i++)
+        {
+            if (bite[i] == 0)
+                end += '0';
+            else
+                end += '1';
+        }
+        if (initial == end && end == "0000")
+        {
+            line(mylines.x1, mylines.y1, mylines.x2, mylines.y2);
+            return;
         }
         else
-        {
-            double x, y;
-            outcodeout = outcode0 ? outcode0 : outcode1;
-            if (outcodeout & TOP)
-            {
-                x = x0 + (ymax - yo) * (x1 - x0) / (y1 - yo);
-                y = ymax;
-            }
-            else if (outcodeout & BOTTOM)
-            {
-                x = x0 + (ymin - yo) * (x1 - x0) / (y1 - yo);
-                y = ymin;
-            }
-            else if (outcodeout & LEFT)
-            {
-                y = yo + (xmin - x0) * (y1 - yo) / (x1 - x0);
-                x = xmin;
-            }
-            else
-            {
-                y = yo + (xmax - x0) * (y1 - yo) / (x1 - x0);
-                x = xmax;
-            }
-            if (outcodeout == outcode0)
-            {
-                x0 = x;
-                yo = y;
-                outcode0 = computeOutcode(x0, yo, xmin, xmax, ymin,
-                                          ymax);
-            }
-            else
-            {
-                x1 = x;
-                y1 = y;
-                outcode1 = computeOutcode(x1, y1, xmin, xmax, ymin,
-                                          ymax);
-            }
-        }
-    } while (done == 0);
-    if (accept)
-        line(x0, yo, x1, y1);
+            return;
+    }
 }
-int main(void)
+int main()
 {
     int gd = DETECT, gm;
-    double x0, x1, y0, y1;
-    double xmin, ymin, xmax, ymax;
-    initgraph(&gd, &gm, "..\\BGI");
-    cout << "Enter Point A (x0, y0): ";
-    cin >> x0 >> y0;
-    cout << "Enter Point B (x1, y1): ";
-    cin >> x1 >> y1;
-    cout << "Enter Bounds of Clipping Rectangle : ";
-    cout << "\n\txmin: ";
-    cin >> xmin;
-    cout << "\tymin: ";
-    cin >> ymin;
-    cout << "\txmax: ";
-    cin >> xmax;
-    cout << "\tymax: ";
-    cin >> ymax;
-    clrscr();
+    xmin = 80;
+    xmax = 200;
+    ymin = 80;
+    ymax = 160;
+    int win = initwindow(400, 300, "Line Clipping Example");
+    setcurrentwindow(win);
     line(xmin, ymin, xmax, ymin);
-    line(xmin, ymin, xmin, ymax);
-    line(xmin, ymax, xmax, ymax);
     line(xmax, ymin, xmax, ymax);
-    line(x0, y0, x1, y1);
-    getch();
-    cleardevice();
-    line(xmin, ymin, xmax, ymin);
-    line(xmin, ymin, xmin, ymax);
-    line(xmin, ymax, xmax, ymax);
-    line(xmax, ymin, xmax, ymax);
-    clipLine(x0, y0, x1, y1, xmin, xmax, ymin, ymax);
+    line(xmax, ymax, xmin, ymax);
+    line(xmin, ymax, xmin, ymin);
+    struct lines mylines[4];
+    mylines[0].x1 = 60;
+    mylines[0].y1 = 130;
+    mylines[0].x2 = 110;
+    mylines[0].y2 = 60;
+
+    mylines[1].x1 = 120;
+    mylines[1].y1 = 40;
+    mylines[1].x2 = 200;
+    mylines[1].y2 = 180;
+
+    mylines[2].x1 = 120;
+    mylines[2].y1 = 200;
+    mylines[2].x2 = 160;
+    mylines[2].y2 = 140;
+
+    mylines[3].x1 = 170;
+    mylines[3].y1 = 100;
+    mylines[3].x2 = 240;
+    mylines[3].y2 = 150;
+    for (int i = 0; i < 4; i++)
+    {
+        line(mylines[i].x1, mylines[i].y1,
+             mylines[i].x2, mylines[i].y2);
+        delay(1000);
+    }
+    for (int i = 0; i < 4; i++)
+    {
+        clip(mylines[i]);
+        delay(1000);
+    }
+    delay(4000);
     getch();
     closegraph();
     return 0;
